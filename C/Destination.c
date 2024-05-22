@@ -112,8 +112,16 @@ void pathMatrix(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
+    #ifdef _MSC_VER
     fscanf(file, "%s", fileGraphName);
     fscanf(file, "%s", fileInterName);
+    #else
+    char tmp;
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s\n", fileGraphName);
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+    #endif
 
     int nbDestination = 0;
     fscanf(file, "%d", &nbDestination);
