@@ -8,13 +8,13 @@
 #include "Header/Destination.h"
 #include "Header/TSP.h"
 #include "Header/GeoJson.h"
-#include <SDL.h>
-#include <stdbool.h>
 
 int main(int argc, char* args []){
     srand(time(NULL));
-    setvbuf(stdout, NULL, _IONBF, 0);
-    char* filename = "../Tests/4_TSP_ACO/input1.txt";
+    //setvbuf(stdout, NULL, _IONBF, 0);
+    char* filename = "Tests/4_TSP_ACO/input1.txt";
     TSP_ACO(filename);
+    /*char* filename = "./Tests/1_Dijkstra/input1.txt";
+    Dijkstra(filename);*/
     return 0;
 }

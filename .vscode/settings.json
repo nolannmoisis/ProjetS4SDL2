@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "listint.h": "c"
+        "listint.h": "c",
+        "destination.h": "c",
+        "settings.h": "c",
+        "sdl.h": "c"
     }
 }

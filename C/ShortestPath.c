@@ -4,7 +4,7 @@ TasData* TasBinaire_create(int size){
     TasData* tas = (TasData*)calloc(size+1, sizeof(TasData));
     AssertNew(tas);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < size; i++){
         tas[i].idNode = -1;
         tas[i].distances = INFINITY;
@@ -159,7 +159,7 @@ void Graph_dijkstra(Graph *graph, int start, int end, int *predecessors, float *
 
     int size = graph->size;
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < size; i++){
         predecessors[i] = -1;
         distances[i] = INFINITY;
@@ -209,8 +209,7 @@ Path *Graph_dijkstraGetPath(int *predecessors, float *distances, int end)
     return path;
 }
 
-Path *Graph_shortestPath(Graph *graph, int start, int end)
-{
+Path *Graph_shortestPath(Graph *graph, int start, int end){
     assert(graph);
 
     int* predecessors = (int*)calloc(graph->size, sizeof(int));

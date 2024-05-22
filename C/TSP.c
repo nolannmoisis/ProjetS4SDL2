@@ -1,6 +1,4 @@
 #include "../Header/TSP.h"
-#include <SDL.h>
-#include <stdbool.h>
 
 int argmin(Path* path, Graph* graph, int start){
     float minDistance = INFINITY;
@@ -60,7 +58,7 @@ Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCou
     Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
 
     for (int i = 0; i < iterationCount; i++){
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int j = 0; j < antCount; j++){
             tourne[j] = Graph_acoConstructPath(graph, pheromone, station, alpha, beta);
         }
@@ -275,8 +273,16 @@ void TSP_ACO(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
+    #ifdef _MSC_VER
     fscanf(file, "%s", fileGraphName);
     fscanf(file, "%s", fileInterName);
+    #else
+    char tmp;
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s\n", fileGraphName);
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+    #endif
 
     int nbDestination = 0;
     fscanf(file, "%d", &nbDestination);
@@ -292,7 +298,7 @@ void TSP_ACO(char* filename){
     for (int i = 0; i < nbDestination; i++){
         ListInt_insertFirst(dest->allDestination, destination[i]);
     }
-
+    
     Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
