@@ -1,5 +1,4 @@
 #include "../Header/TSP.h"
-#include <SDL.h>
 
 int argmin(Path* path, Graph* graph, int start){
     float minDistance = INFINITY;
@@ -295,16 +294,11 @@ void TSP_Heuristic(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
-    #ifdef __linux__
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s", fileInterName);
-    #else
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #endif
 
     int nbDestination = 0;
     fscanf(file, "%d", &nbDestination);
@@ -356,16 +350,11 @@ void TSP_ACO(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
-    #ifdef __linux__
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s", fileInterName);
-    #else
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #endif
 
     int nbDestination = 0;
     fscanf(file, "%d", &nbDestination);

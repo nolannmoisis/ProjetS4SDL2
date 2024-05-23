@@ -321,16 +321,11 @@ void Dijkstra(char* filename){
 
     FILE* file = fopen(filename, "r");
 
-    #ifdef _MSC_VER
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #else
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s", fileInterName);
-    #endif
 
     int start = 0;
     int end = 0;

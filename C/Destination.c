@@ -107,16 +107,11 @@ void pathMatrix(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
-    #ifdef __linux__
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s", fileInterName);
-    #else
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #endif
 
     int nbDestination = 0;
     fscanf(file, "%d", &nbDestination);
