@@ -50,8 +50,7 @@ Graph* Graph_PheromoneCreate(Graph* graph){
 }
 
 Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q){
-    Path* bestTourne = (Path *)calloc(1, sizeof(Path));
-    AssertNew(bestTourne);
+    Path* bestTourne = NULL;
     Graph* pheromone = Graph_PheromoneCreate(graph);
     AssertNew(pheromone);
 
@@ -64,7 +63,10 @@ Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCou
         }
         Graph_acoPheromoneGlobalUpdate(pheromone, rho);
         for (int j = 0; j < antCount; j++){
-            if((bestTourne->list == NULL) || (tourne[j]->distance < bestTourne->distance)){
+            if(bestTourne == NULL){
+                bestTourne = Path_copy(tourne[j]);
+            }
+            else if(tourne[j]->distance < bestTourne->distance){
                 Path_destroy(bestTourne);
                 bestTourne = Path_copy(tourne[j]);
             }
@@ -220,8 +222,8 @@ float* Graph_acoGetProbabilities(Graph* graph, Graph* pheromones, int station, b
 
     for (ArcList* arc = Graph_getArcList(pheromones, station); arc != NULL; arc = arc->next){
         if(!explored[arc->target]){
-            if(sumTauxByDist < 1e-15) proba[arc->target] = 1.0f/(count);
-            else proba[arc->target] = proba[arc->target]/sumTauxByDist;
+            if(sumTauxByDist < 1e-20f) proba[arc->target] = 1.0f/(float)count;
+            else proba[arc->target] = proba[arc->target]/sumTauxByDist; //vérifier entre 0 et 1
         }
     }
 
@@ -264,7 +266,7 @@ Path* Graph_acoConstructPath(Graph* graph, Graph* pheromones, int station, float
         for (ArcList* arc = Graph_getArcList(graph, prev); arc != NULL; arc = arc->next){
             if(!explored[arc->target]){
                 totalProba += proba[arc->target];
-                if(totalProba >= probaRandom){
+                if(totalProba + 1e-4f >= probaRandom){
                     next = arc->target;
                     break;
                 }
@@ -317,7 +319,7 @@ void Graph_acoPheromoneGlobalUpdate(Graph* pheromones, float rho){
     for (int u = 0; u < pheromones->size; u++){
         for (ArcList* arc = Graph_getArcList(pheromones, u); arc->next != NULL; arc = arc->next){
             ArcData* actualPheromoneUV = Graph_getArc(pheromones, u, arc->target);
-            actualPheromoneUV->weight = ((1-rho) * actualPheromoneUV->weight);
+            actualPheromoneUV->weight = ((1.f-rho) * actualPheromoneUV->weight);
         }
     }
 
@@ -435,16 +437,19 @@ void TSP_ACO(char* filename){
 
     Destination* dest = DestinationPathMatrix(fileGraphName, nbDestination, destination);
 
+    printf("PathMatrix End\n");
+
     for (int i = 0; i < nbDestination; i++){
         ListInt_insertFirst(dest->allDestination, destination[i]);
     }
 
-    char* fileRegister = "pathMatrixRegister.txt";
+    //char* fileRegister = "pathMatrixRegister.txt";
 
-    DestinationWrite(dest, fileRegister);
+    //DestinationWrite(dest, fileRegister);
     
     //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
-    FILE* fileInter = fopen(fileInterName, "r");
+
+    /*FILE* fileInter = fopen(fileInterName, "r");
 
     int nb = 0;
     fscanf(fileInter,"%d",&nb);
@@ -515,14 +520,15 @@ void TSP_ACO(char* filename){
     SDL_Rect dst = {0, 0, width, height};
     SDL_RenderCopy(renderer, texture, NULL, &dst);
     bool running = true;
-    SDL_Event event;
+    SDL_Event event;*/
 
-    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
+    //Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
     //Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
+    Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
     DestinationPrintList(tourne->list);
-    ListInt* list = pathAllCheckpoint(dest, tourne);
+    /*ListInt* list = pathAllCheckpoint(dest, tourne);
 
     ListIntNode* tmpNode = list->sentinel.next;
 
@@ -560,10 +566,10 @@ void TSP_ACO(char* filename){
     for(int i=0;i<nb;i++){
         free(coord[i]);
     }
-    free(coord);
+    free(coord);*/
     DestinationDestroy(dest);
     free(destination);
-    fclose(fileInter);
+    //fclose(fileInter);
     fclose(file);
     Path_destroy(tourne);
 }

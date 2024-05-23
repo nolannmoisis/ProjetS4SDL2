@@ -69,6 +69,8 @@ Destination* DestinationLoad(char* filename){
         }
     }
 
+    fclose(file);
+
     return NULL;
 }
 
@@ -82,9 +84,6 @@ Destination* DestinationCreate(int nbDestination){
     destination->path = (Path***)calloc(nbDestination, sizeof(Path**));
     for (int i = 0; i < nbDestination; i++){
         destination->path[i] = (Path**)calloc(nbDestination, sizeof(Path*));
-        for (int j = 0; j < nbDestination; j++){
-            destination->path[i][j] = Path_create(0);
-        }
     }
 
     destination->allDestination = ListInt_create();
@@ -109,23 +108,33 @@ void DestinationDestroy(Destination* destination){
 }
 
 Destination* DestinationPathMatrix(char* filename, int nbDestination, int* destination){
+    assert(destination);
+
     Graph* graph = Graph_load(filename);
+    AssertNew(graph);
+
+    printf("Graph Load\n");
 
     Destination* dest = DestinationCreate(nbDestination);
 
     for (int i = 0; i < nbDestination; i++){
         for (int j = i; j < nbDestination; j++){
             Path* path = Graph_shortestPath(graph, destination[i], destination[j]);
-            Path* reversePath = PathReverse_copy(path);
 
             dest->path[i][j] = path;
-            dest->path[j][i] = reversePath;
 
             ArcData data;
             data.weight = path->distance;
 
             Graph_setArc(dest->graph, i, j, &data);
-            Graph_setArc(dest->graph, j, i, &data);
+
+            if(j != i){
+                Path* reversePath = PathReverse_copy(path);
+
+                dest->path[j][i] = reversePath;
+
+                Graph_setArc(dest->graph, j, i, &data);
+            }
         }
     }
 

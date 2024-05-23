@@ -1,7 +1,7 @@
 #include "../Header/ShortestPath.h"
 
 TasData* TasBinaire_create(int size){
-    TasData* tas = (TasData*)calloc(size+1, sizeof(TasData));
+    TasData* tas = (TasData*)calloc(size, sizeof(TasData));
     AssertNew(tas);
 
     #pragma omp parallel for
@@ -17,7 +17,7 @@ void TasBinaire_print(TasData *tas){
     assert(tas);
     int i = 0;
     while (tas[i].idNode != -1){
-        printf("[%d|%f]-", tas[i].idNode, tas[i].distances);
+        printf("[%d|%.1f]-", tas[i].idNode, tas[i].distances);
         i++;
     }
     printf("\n");
@@ -44,12 +44,16 @@ int filsDroitIndex(int index){
 void TasBinaire_Permute(TasData *tas, int indexFirst, int indexSecond){
     assert(tas);
     TasData tmp;
-    tmp.idNode = tas[indexFirst].idNode;
+    /*tmp.idNode = tas[indexFirst].idNode;
     tmp.distances = tas[indexFirst].distances;
     tas[indexFirst].idNode = tas[indexSecond].idNode;
     tas[indexFirst].distances = tas[indexSecond].distances;
     tas[indexSecond].idNode = tmp.idNode;
-    tas[indexSecond].distances = tmp.distances;
+    tas[indexSecond].distances = tmp.distances;*/
+
+    tmp = tas[indexFirst];
+    tas[indexFirst] = tas[indexSecond];
+    tas[indexSecond] = tmp;
 }
 
 void TasBinaireInsert(TasData *tas, int id, float distance, int size){
@@ -172,6 +176,7 @@ void Graph_dijkstra(Graph *graph, int start, int end, int *predecessors, float *
     TasBinaireInsert(tas, start, distances[start], size);
 
     while (!TasBinaire_IsEmpty(tas)){
+        //TasBinaire_print(tas);
         TasData u = TasBinairePop(tas);
 
         if((u.idNode == end) || (u.distances == INFINITY)){
@@ -335,6 +340,8 @@ void Dijkstra(char* filename){
     fclose(file);
 
     Graph* graph = Graph_load(fileGraphName);
+
+    printf("Fin load\n");
 
     Path* path = Graph_shortestPath(graph, start, end);
 

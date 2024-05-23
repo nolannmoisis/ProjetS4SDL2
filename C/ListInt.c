@@ -245,7 +245,6 @@ ListInt* ListInt_Reverse(ListInt* list){
         ListIntIter_next(iterList);
     }
 
-
     ListIntIter_destroy(iterList);
 
     return listReverse;
