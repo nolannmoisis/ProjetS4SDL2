@@ -6,7 +6,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-default/CMakeFiles/3.27.8/CMakeSystem.cmake"
+			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeSystem.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -20,11 +20,11 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-default/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
+			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-default/CMakeFiles/3.27.8/CMakeCXXCompiler.cmake"
+			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeCXXCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -50,6 +50,21 @@
 			"isCMake" : true,
 			"isExternal" : true,
 			"path" : "C:/Program Files/JetBrains/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/Platform/WindowsPaths.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "C:/Program Files/JetBrains/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeFindCodeBlocks.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "C:/Program Files/JetBrains/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeExtraGeneratorDetermineCompilerMacrosAndIncludeDirs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "C:/Program Files/JetBrains/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/ProcessorCount.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -88,7 +103,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-default/CMakeFiles/3.27.8/CMakeRCCompiler.cmake"
+			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeRCCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -202,8 +217,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS2-SDL2/cmake-build-default",
-		"source" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS2-SDL2"
+		"build" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS4SDL2/cmake-build-release",
+		"source" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS4SDL2"
 	},
 	"version" : 
 	{

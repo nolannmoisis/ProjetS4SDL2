@@ -1,4 +1,5 @@
 #include "../Header/TSP.h"
+#include <SDL.h>
 
 int argmin(Path* path, Graph* graph, int start){
     float minDistance = INFINITY;

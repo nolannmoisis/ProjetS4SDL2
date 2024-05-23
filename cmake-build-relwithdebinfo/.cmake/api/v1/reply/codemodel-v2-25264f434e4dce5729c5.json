@@ -6,7 +6,7 @@
 			[
 				{
 					"build" : ".",
-					"jsonFile" : "directory-.-MinSizeRel-d0094a50bb2071803777.json",
+					"jsonFile" : "directory-.-RelWithDebInfo-d0094a50bb2071803777.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.22"
@@ -19,7 +19,7 @@
 					]
 				}
 			],
-			"name" : "MinSizeRel",
+			"name" : "RelWithDebInfo",
 			"projects" : 
 			[
 				{
@@ -27,7 +27,7 @@
 					[
 						0
 					],
-					"name" : "ProjetS2-SDL",
+					"name" : "ProjetS4SDL2",
 					"targetIndexes" : 
 					[
 						0
@@ -38,9 +38,9 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "ProjetS2-SDL::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-ProjetS2-SDL-MinSizeRel-bca2c87e2e0ebdb91f95.json",
-					"name" : "ProjetS2-SDL",
+					"id" : "ProjetS4SDL2::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ProjetS4SDL2-RelWithDebInfo-ffb5e4ec7695bf077187.json",
+					"name" : "ProjetS4SDL2",
 					"projectIndex" : 0
 				}
 			]
@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS2-SDL2/cmake-build-minsizerel",
-		"source" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS2-SDL2"
+		"build" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS4SDL2/cmake-build-relwithdebinfo",
+		"source" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS4SDL2"
 	},
 	"version" : 
 	{

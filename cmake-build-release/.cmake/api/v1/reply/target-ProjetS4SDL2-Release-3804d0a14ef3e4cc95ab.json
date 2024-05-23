@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "ProjetS2-SDL.exe"
+			"path" : "ProjetS4SDL2.exe"
 		},
 		{
-			"path" : "ProjetS2-SDL.pdb"
+			"path" : "ProjetS4SDL2.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -52,14 +52,14 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-O2 -g -DNDEBUG -std=gnu99 -fdiagnostics-color=always"
+					"fragment" : "-O3 -DNDEBUG -std=gnu99 -fdiagnostics-color=always"
 				}
 			],
 			"includes" : 
 			[
 				{
 					"backtrace" : 3,
-					"path" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS2-SDL2/SDL2/x86_64-w64-mingw32/include/SDL2"
+					"path" : "C:/Users/nolan/OneDrive/Documents/Git/ProjetS4SDL2/SDL2/x86_64-w64-mingw32/include/SDL2"
 				}
 			],
 			"language" : "C",
@@ -86,13 +86,13 @@
 			]
 		}
 	],
-	"id" : "ProjetS2-SDL::@6890427a1f51a3e7e1df",
+	"id" : "ProjetS4SDL2::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-O2 -g -DNDEBUG",
+				"fragment" : "-O3 -DNDEBUG",
 				"role" : "flags"
 			},
 			{
@@ -111,12 +111,12 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "C:\\Users\\nolan\\OneDrive\\Documents\\Git\\ProjetS2-SDL2\\SDL2\\x86_64-w64-mingw32\\lib\\libSDL2main.a",
+				"fragment" : "C:\\Users\\nolan\\OneDrive\\Documents\\Git\\ProjetS4SDL2\\SDL2\\x86_64-w64-mingw32\\lib\\libSDL2main.a",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "C:\\Users\\nolan\\OneDrive\\Documents\\Git\\ProjetS2-SDL2\\SDL2\\x86_64-w64-mingw32\\lib\\libSDL2.dll.a",
+				"fragment" : "C:\\Users\\nolan\\OneDrive\\Documents\\Git\\ProjetS4SDL2\\SDL2\\x86_64-w64-mingw32\\lib\\libSDL2.dll.a",
 				"role" : "libraries"
 			},
 			{
@@ -126,8 +126,8 @@
 		],
 		"language" : "C"
 	},
-	"name" : "ProjetS2-SDL",
-	"nameOnDisk" : "ProjetS2-SDL.exe",
+	"name" : "ProjetS4SDL2",
+	"nameOnDisk" : "ProjetS4SDL2.exe",
 	"paths" : 
 	{
 		"build" : ".",
