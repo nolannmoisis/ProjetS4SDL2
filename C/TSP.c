@@ -80,6 +80,72 @@ Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCou
     return bestTourne;
 }
 
+Graph* Graph_PheromoneCreatePath(Graph* graph, Path* tourne){
+    Graph* pheromone = Graph_create(graph->size);
+
+    ArcData init;
+    init.weight = 1.0f;
+
+    for (int u = 0; u < graph->size; u++){
+        for (ArcList* arc = Graph_getArcList(graph, u); arc != NULL; arc = arc->next){
+            Graph_setArc(pheromone, u, arc->target, &init);
+        }
+    }
+
+    int start = ListInt_dequeue(tourne->list);
+    int actual = start;
+    int next = 0;
+
+    while (!ListInt_isEmpty(tourne->list)){
+        next = ListInt_dequeue(tourne->list);
+
+        ArcData* actualTauxUV = Graph_getArc(pheromone, actual, next);
+        actualTauxUV->weight += 1.0f;
+
+        if(next == start) break;
+
+        actual = next;
+    }
+
+    return pheromone;
+}
+
+Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q){
+    Path* bestTourne = (Path *)calloc(1, sizeof(Path));
+    AssertNew(bestTourne);
+
+    Path* tourneGlouton = Graph_tspFromHeuristic(graph, station);
+
+    printf("%.1f %d\n", tourneGlouton->distance, tourneGlouton->list->nodeCount);
+    DestinationPrintList(tourneGlouton->list);
+
+    Graph* pheromone = Graph_PheromoneCreatePath(graph, tourneGlouton);
+    AssertNew(pheromone);
+
+    Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
+
+    for (int i = 0; i < iterationCount; i++){
+        #pragma omp parallel for
+        for (int j = 0; j < antCount; j++){
+            tourne[j] = Graph_acoConstructPath(graph, pheromone, station, alpha, beta);
+        }
+        Graph_acoPheromoneGlobalUpdate(pheromone, rho);
+        for (int j = 0; j < antCount; j++){
+            if((bestTourne->list == NULL) || (tourne[j]->distance < bestTourne->distance)){
+                Path_destroy(bestTourne);
+                bestTourne = Path_copy(tourne[j]);
+            }
+            Graph_acoPheromoneUpdatePath(pheromone, tourne[j], q);
+            Path_destroy(tourne[j]);
+        }
+    }
+
+    Graph_destroy(pheromone);
+    free(tourne);
+
+    return bestTourne;
+}
+
 float* Graph_acoGetProbabilities(Graph* graph, Graph* pheromones, int station, bool* explored, float alpha, float beta){
     float* proba = (float*)calloc(graph->size, sizeof(float));
     float sumTauxByDist = 0.0f;
@@ -100,13 +166,24 @@ float* Graph_acoGetProbabilities(Graph* graph, Graph* pheromones, int station, b
         }
     }
 
-    /*float sommeProba = 0.0f;
-    for (int i = 0; i < graph->size; i++){
-        sommeProba += proba[i];
-    }
-    assert((sommeProba > 0.9f) && (sommeProba < 1.1f));*/
-
     return proba;
+}
+
+int argminACO(int station, Graph* graph, bool* explored){
+    int minIndex = 0;
+    float minDist = INFINITY;
+
+    for (int u = 0; u < graph->size; u++){
+        if(!explored[u]){
+            ArcData* arc = Graph_getArc(graph, station, u);
+            if(minDist > arc->weight){
+                minIndex = u;
+                minDist = arc->weight;
+            }
+        }
+    }
+    
+    return minIndex;
 }
 
 Path* Graph_acoConstructPath(Graph* graph, Graph* pheromones, int station, float alpha, float beta){
@@ -122,17 +199,11 @@ Path* Graph_acoConstructPath(Graph* graph, Graph* pheromones, int station, float
         float* proba = Graph_acoGetProbabilities(graph, pheromones, prev, explored, alpha, beta);
         next = -1;
 
-        //unsigned int r = ((rand() ^ (rand() << 15)) & 0x7FFFFFFF);
-
         float probaRandom = (float)rand()/RAND_MAX;
         float totalProba = 0.0f;
-        int idNext = -1;
 
         for (ArcList* arc = Graph_getArcList(graph, prev); arc != NULL; arc = arc->next){
             if(!explored[arc->target]){
-                if (idNext == -1){
-                    idNext = arc->target;
-                }
                 totalProba += proba[arc->target];
                 if(totalProba > probaRandom){
                     next = arc->target;
@@ -141,7 +212,10 @@ Path* Graph_acoConstructPath(Graph* graph, Graph* pheromones, int station, float
             }
         }
 
-        if(next == -1) next = idNext;
+        if(next == -1){
+            printf("next == -1\n");
+            next = argminACO(prev, graph, explored);
+        }
 
         explored[next] = true;
         ArcData* data = Graph_getArc(graph, prev, next);
@@ -221,14 +295,14 @@ void TSP_Heuristic(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
-    #ifdef _MSC_VER
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #else
+    #ifdef __linux__
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+    #else
+    fscanf(file, "%s", fileGraphName);
     fscanf(file, "%s", fileInterName);
     #endif
 
@@ -282,14 +356,14 @@ void TSP_ACO(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
-    #ifdef _MSC_VER
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #else
+    #ifdef __linux__
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+    #else
+    fscanf(file, "%s", fileGraphName);
     fscanf(file, "%s", fileInterName);
     #endif
 
@@ -308,7 +382,8 @@ void TSP_ACO(char* filename){
         ListInt_insertFirst(dest->allDestination, destination[i]);
     }
     
-    Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
+    //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
+    Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
     DestinationPrintList(tourne->list);

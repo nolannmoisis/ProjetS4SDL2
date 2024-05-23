@@ -12,10 +12,10 @@
 #include <time.h>
 #include <omp.h>
 
-#ifdef _MSC_VER
-#include <SDL.h>
-#else
+#ifdef __linux__
 #include <SDL2/SDL.h>
+#else
+#include <SDL.h>
 #endif
 
 #define AssertNew(ptr) { if (ptr == NULL) { assert(false); abort(); } }

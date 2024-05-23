@@ -54,12 +54,7 @@ Destination* DestinationPathMatrix(char* filename, int nbDestination, int* desti
 
             Graph_setArc(dest->graph, i, j, &data);
             Graph_setArc(dest->graph, j, i, &data);
-
-            printf(".");
-            fflush(stdout);
         }
-        printf("\n_");
-        fflush(stdout);
     }
 
     Graph_destroy(graph);
@@ -112,14 +107,14 @@ void pathMatrix(char* filename){
     FILE* file = fopen(filename, "r");
     if(file == NULL) return;
 
-    #ifdef _MSC_VER
-    fscanf(file, "%s", fileGraphName);
-    fscanf(file, "%s", fileInterName);
-    #else
+    #ifdef __linux__
     char tmp;
     fscanf(file, "%c", &tmp);
     fscanf(file, "%s\n", fileGraphName);
     fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+    #else
+    fscanf(file, "%s", fileGraphName);
     fscanf(file, "%s", fileInterName);
     #endif
 

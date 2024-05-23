@@ -31,6 +31,10 @@ Graph* Graph_PheromoneCreate(Graph* graph);
 /// @return La tournée.
 Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q);
 
+Graph* Graph_PheromoneCreatePath(Graph* graph, Path* tourne);
+
+Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q);
+
 /// @brief Depuis un sommet, calcule les probabilités de passer aux sommets suivants.
 /// @param graph le graphe des distances. Il doit être complet.
 /// @param pheromones le graphe des phéromones.
@@ -40,6 +44,8 @@ Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCou
 /// @param beta un réel supérieur à 1.f qui contrôle l'influence de la distance réelle sur le choix des fourmis.
 /// @return Le tableau aloué dynamiquement des probabilités de la fourmi.
 float* Graph_acoGetProbabilities(Graph* graph, Graph* pheromones, int station, bool* explored, float alpha, float beta);
+
+int argminACO(int station, Graph* graph, bool* explored);
 
 /// @brief Construit la tournée d'une fourmi.
 /// @param graph le graphe des distances. Il doit être complet.
