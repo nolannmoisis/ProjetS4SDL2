@@ -9,6 +9,7 @@ void DestinationWrite(Destination* destination, char* filename){
     fprintf(file, "%d %d", size, (size * size));
     for (int u = 0; u < size; u++){
         for (int v = 0; v < size; v++){
+            //ici ça plante
             fprintf(file, "\n%d %d %.1f %d", u, v, Graph_getArc(destination->graph, u, v)->weight, destination->path[u][v]->list->nodeCount);
             ListIntIter* iterList = ListIntIter_create(destination->path[u][v]->list);
             AssertNew(iterList);

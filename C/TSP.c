@@ -176,7 +176,7 @@ Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iteratio
             ListInt* listCopy = ListInt_copy(List);
             int actual = ListInt_popFirst(listCopy);
             int next = 0;
-            if (j % (int) (antCount / 2) == 0) {
+            if (j % (int)(antCount / 2) == 0) {
                 while (!ListInt_isEmpty(listCopy)) {
                     next = ListInt_popFirst(listCopy);
                     double xA = ((coord[actual][1] - minLat) * adjust) / RLat;
@@ -186,16 +186,12 @@ Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iteratio
                     SDL_SetRenderDrawColor(renderer, 255, 0 , 0, 1);
                     SDL_RenderDrawLineF(renderer, (float) yA + addX, (float)adjust - xA, (float)yB + addX,(float)adjust - xB);
                     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                    //printf(".");
-                    fflush(stdout);
-
                     if (List->nodeCount < 1) break;
 
                     actual = next;
                 }
             }
             SDL_RenderPresent(renderer);
-            //printf("__\n");
             fflush(stdout);
             ListInt_destroy(listCopy);
             ListInt_destroy(List);
@@ -448,7 +444,6 @@ void TSP_ACO(char* filename){
     DestinationWrite(dest, fileRegister);
     
     //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
-
     FILE* fileInter = fopen(fileInterName, "r");
 
     int nb = 0;
