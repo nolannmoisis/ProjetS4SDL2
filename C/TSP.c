@@ -528,12 +528,12 @@ void TSP_ACO(char* filename){
 
     Path* glout = Graph_tspFromHeuristic(dest->graph, 0);
 
-    float q = glout->distance/2.0f;
+    float q = glout->distance/2;
 
     Path_destroy(glout);
 
     //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, q);
-    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 600, 400, 1.25f, 1.2f, 0.025f, q, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
+    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 800, 400, 1.25f, 1.2f, 0.025f, q, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
     DestinationPrintList(tourne->list);
@@ -557,7 +557,7 @@ void TSP_ACO(char* filename){
 
     while (running) {
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN || event.type == SDL_MOUSEBUTTONDOWN) {
+            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN) { // || event.type == SDL_MOUSEBUTTONDOWN
                 running = false;
                 break;
             }

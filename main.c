@@ -12,8 +12,7 @@
 int main(int argc, char* args []){
     srand(time(NULL));
     setvbuf(stdout, NULL, _IONBF, 0);
-    char* filename = "Tests/5_Grande_instance/input.txt";
+    char* filename = "Tests/4_TSP_ACO/input4.txt";
     TSP_ACO(filename);
-
     return 0;
 }
