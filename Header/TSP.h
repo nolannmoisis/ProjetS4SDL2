@@ -35,7 +35,7 @@ Graph* Graph_PheromoneCreatePath(Graph* graph, Path* tourne);
 
 Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q);
 
-Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest);
+Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest,SDL_Texture* texture,SDL_Rect dst);
 
 /// @brief Depuis un sommet, calcule les probabilités de passer aux sommets suivants.
 /// @param graph le graphe des distances. Il doit être complet.

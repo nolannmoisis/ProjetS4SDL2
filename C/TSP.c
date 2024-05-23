@@ -147,7 +147,7 @@ Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount,
     return bestTourne;
 }
 
-Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest){
+Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest,SDL_Texture* texture,SDL_Rect dst){
     Path* bestTourne = (Path *)calloc(1, sizeof(Path));
     AssertNew(bestTourne);
 
@@ -176,20 +176,27 @@ Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iteratio
             ListInt* listCopy = ListInt_copy(List);
             int actual = ListInt_popFirst(listCopy);
             int next = 0;
-            while (!ListInt_isEmpty(listCopy)){
-                next = ListInt_popFirst(listCopy);
-                double xA = ((coord[actual][1] - minLat) * adjust) / RLat;
-                double yA = ((coord[actual][0] - minLong) * adjust) / RLong;
-                double xB = ((coord[next][1] - minLat) * adjust) / RLat;
-                double yB = ((coord[next][0] - minLong) * adjust) / RLong;
-                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-                SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
-                SDL_RenderPresent(renderer);
+            if (j % (int) (antCount / 2) == 0) {
+                while (!ListInt_isEmpty(listCopy)) {
+                    next = ListInt_popFirst(listCopy);
+                    double xA = ((coord[actual][1] - minLat) * adjust) / RLat;
+                    double yA = ((coord[actual][0] - minLong) * adjust) / RLong;
+                    double xB = ((coord[next][1] - minLat) * adjust) / RLat;
+                    double yB = ((coord[next][0] - minLong) * adjust) / RLong;
+                    SDL_SetRenderDrawColor(renderer, 255, 0 , 0, 1);
+                    SDL_RenderDrawLineF(renderer, (float) yA + addX, (float)adjust - xA, (float)yB + addX,(float)adjust - xB);
+                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                    //printf(".");
+                    fflush(stdout);
 
-                if(List->nodeCount < 1) break;
+                    if (List->nodeCount < 1) break;
 
-                actual = next;
+                    actual = next;
+                }
             }
+            SDL_RenderPresent(renderer);
+            //printf("__\n");
+            fflush(stdout);
             ListInt_destroy(listCopy);
             ListInt_destroy(List);
             Graph_acoPheromoneUpdatePath(pheromone, tourne[j], q);
@@ -261,7 +268,7 @@ Path* Graph_acoConstructPath(Graph* graph, Graph* pheromones, int station, float
         for (ArcList* arc = Graph_getArcList(graph, prev); arc != NULL; arc = arc->next){
             if(!explored[arc->target]){
                 totalProba += proba[arc->target];
-                if(totalProba > probaRandom){
+                if(totalProba >= probaRandom){
                     next = arc->target;
                     break;
                 }
@@ -302,7 +309,7 @@ void Graph_acoPheromoneUpdatePath(Graph* pheromones, Path* path, float q){
         ArcData* actualTauxUV = Graph_getArc(pheromones, actual, next);
         actualTauxUV->weight += (q/(path->distance));
 
-        if(next == start) break;
+        //if(next == start) break;
 
         actual = next;
     }
@@ -480,6 +487,7 @@ void TSP_ACO(char* filename){
         SDL_Quit();
         return;
     }
+    SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
 
     SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                                               SDL_TEXTUREACCESS_TARGET, width, height);
@@ -514,7 +522,7 @@ void TSP_ACO(char* filename){
     bool running = true;
     SDL_Event event;
 
-    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest);
+    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
     //Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
@@ -529,7 +537,7 @@ void TSP_ACO(char* filename){
             double yA = ((coord[tmpNode->value][0] - minLong) * adjust) / RLong;
             double xB = ((coord[tmpNode->next->value][1] - minLat) * adjust) / RLat;
             double yB = ((coord[tmpNode->next->value][0] - minLong) * adjust) / RLong;
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
             SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
         }
         tmpNode = tmpNode->next;

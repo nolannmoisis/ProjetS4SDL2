@@ -12,7 +12,7 @@
 int main(int argc, char* args []){
     srand(time(NULL));
     
-    char* filename = "Tests/4_TSP_ACO/input1.txt";
+    char* filename = "Tests/4_TSP_ACO/input2.txt";
     TSP_ACO(filename);
 
     return 0;
