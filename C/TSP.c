@@ -121,6 +121,8 @@ Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount,
     Graph* pheromone = Graph_PheromoneCreatePath(graph, tourneGlouton);
     AssertNew(pheromone);
 
+    Path_destroy(tourneGlouton);
+
     Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
 
     for (int i = 0; i < iterationCount; i++){
@@ -170,22 +172,26 @@ Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iteratio
                 Path_destroy(bestTourne);
                 bestTourne = Path_copy(tourne[j]);
             }
-            //ListInt* List = pathAllCheckpoint(dest, tourne[j]);
-            //ListIntIter* iterList = ListIntIter_create(List);
-            //while (ListIntIter_isValid(iterList)){
-            //    int node = ListIntIter_get(iterList);
-            //    ListIntIter_next(iterList);
-            //    int next = ListIntIter_get(iterList);
-            //    double xA = ((coord[node][1] - minLat) * adjust) / RLat;
-            //    double yA = ((coord[node][0] - minLong) * adjust) / RLong;
-            //    double xB = ((coord[next][1] - minLat) * adjust) / RLat;
-            //    double yB = ((coord[next][0] - minLong) * adjust) / RLong;
-            //    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-            //    SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
-            //    SDL_RenderPresent(renderer);
-            //}
-            //ListIntIter_destroy(iterList);
-            //ListInt_destroy(List);
+            ListInt* List = pathAllCheckpoint(dest, tourne[j]);
+            ListInt* listCopy = ListInt_copy(List);
+            int actual = ListInt_popFirst(listCopy);
+            int next = 0;
+            while (!ListInt_isEmpty(listCopy)){
+                next = ListInt_popFirst(listCopy);
+                double xA = ((coord[actual][1] - minLat) * adjust) / RLat;
+                double yA = ((coord[actual][0] - minLong) * adjust) / RLong;
+                double xB = ((coord[next][1] - minLat) * adjust) / RLat;
+                double yB = ((coord[next][0] - minLong) * adjust) / RLong;
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+                SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
+                SDL_RenderPresent(renderer);
+
+                if(List->nodeCount < 1) break;
+
+                actual = next;
+            }
+            ListInt_destroy(listCopy);
+            ListInt_destroy(List);
             Graph_acoPheromoneUpdatePath(pheromone, tourne[j], q);
             Path_destroy(tourne[j]);
         }
@@ -327,16 +333,18 @@ ListInt* pathAllCheckpoint(Destination* dest, Path* tourne){
     ListIntIter* listIter = ListIntIter_create(tourne->list);
     while (ListIntIter_isValid(listIter)){
         int next = ListIntIter_get(listIter);
+        ListInt* destCopyList = ListInt_copy(dest->path[start][next]->list);
         if(first == true){
-            ListInt_concatenate(list, dest->path[start][next]->list);
+            ListInt_concatenate(list, destCopyList);
             first = false;
         }
         else {
-            bin = ListInt_popFirst(dest->path[start][next]->list);
-            ListInt_concatenate(list, dest->path[start][next]->list);
+            bin = ListInt_popFirst(destCopyList);
+            ListInt_concatenate(list, destCopyList);
         }
         start = next;
         ListIntIter_next(listIter);
+        ListInt_destroy(destCopyList);
     }
     ListIntIter_destroy(listIter);
     bin += 1;
@@ -427,6 +435,10 @@ void TSP_ACO(char* filename){
     for (int i = 0; i < nbDestination; i++){
         ListInt_insertFirst(dest->allDestination, destination[i]);
     }
+
+    char* fileRegister = "pathMatrixRegister.txt";
+
+    DestinationWrite(dest, fileRegister);
     
     //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
 
@@ -503,6 +515,7 @@ void TSP_ACO(char* filename){
     SDL_Event event;
 
     Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest);
+    //Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
     DestinationPrintList(tourne->list);

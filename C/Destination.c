@@ -1,5 +1,76 @@
 #include "../Header/Destination.h"
 
+void DestinationWrite(Destination* destination, char* filename){
+    FILE* file = fopen(filename, "w");
+    if(file == NULL) return;
+
+    int size = destination->nbDestination;
+
+    fprintf(file, "%d %d", size, (size * size));
+    for (int u = 0; u < size; u++){
+        for (int v = 0; v < size; v++){
+            fprintf(file, "\n%d %d %.1f %d", u, v, Graph_getArc(destination->graph, u, v)->weight, destination->path[u][v]->list->nodeCount);
+            ListIntIter* iterList = ListIntIter_create(destination->path[u][v]->list);
+            AssertNew(iterList);
+
+            while (ListIntIter_isValid(iterList)){
+                int actualNode = ListIntIter_get(iterList);
+                fprintf(file, " %d", actualNode);
+                ListIntIter_next(iterList);
+            }
+
+            ListIntIter_destroy(iterList);
+        }
+    }
+
+    fprintf(file, "\n%d", destination->allDestination->nodeCount);
+    ListIntIter* iterList = ListIntIter_create(destination->allDestination);
+    AssertNew(iterList);
+
+    while (ListIntIter_isValid(iterList)){
+        int actualNode = ListIntIter_get(iterList);
+        fprintf(file, " %d", actualNode);
+        ListIntIter_next(iterList);
+    }
+
+    ListIntIter_destroy(iterList);
+
+    fclose(file);
+}
+
+Destination* DestinationLoad(char* filename){
+    FILE* file = fopen(filename, "r");
+    if(file == NULL) return NULL;
+
+    int size = 0;
+    int nbArc = 0;
+    int u = 0;
+    int v = 0;
+    int actualNode = 0;
+
+    fscanf(file, "%d %d", &size, &nbArc);
+
+    Destination* dest = DestinationCreate(size);
+
+    dest->path = (Path***)calloc(size, sizeof(Path**));
+    for (int i = 0; i < size; i++){
+        dest->path[i] = (Path**)calloc(size, sizeof(Path*));
+    }
+
+    for (int i = 0; i <= nbArc; i++){
+        ArcData data;
+        fscanf(file, "%d %d %f %d", &u, &v, &data.weight, &dest->path[u][v]->list->nodeCount);
+        dest->path[u][v]->distance = data.weight;
+        Graph_setArc(dest->graph, u, v, &data);
+        for (int j = 0; j < dest->path[u][v]->list->nodeCount; j++){
+            fscanf(file, "%d", &actualNode);
+            ListInt_insertLast(dest->path[u][v]->list, actualNode);
+        }
+    }
+
+    return NULL;
+}
+
 Destination* DestinationCreate(int nbDestination){
     Destination* destination = (Destination*)calloc(1, sizeof(Destination));
 

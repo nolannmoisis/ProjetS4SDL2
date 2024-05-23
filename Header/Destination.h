@@ -15,6 +15,10 @@ typedef struct Destination_s{
     ListInt* allDestination;
 } Destination;
 
+void DestinationWrite(Destination* destination, char* filename);
+
+Destination* DestinationLoad(char* filename);
+
 Destination* DestinationCreate(int nbDestination);
 
 void DestinationDestroy(Destination* destination);
