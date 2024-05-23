@@ -35,6 +35,8 @@ Graph* Graph_PheromoneCreatePath(Graph* graph, Path* tourne);
 
 Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q);
 
+Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest);
+
 /// @brief Depuis un sommet, calcule les probabilités de passer aux sommets suivants.
 /// @param graph le graphe des distances. Il doit être complet.
 /// @param pheromones le graphe des phéromones.
@@ -61,6 +63,8 @@ Path* Graph_acoConstructPath(Graph* graph, Graph* pheromones, int station, float
 /// @param path la tournée de la fourmi.
 /// @param q un réel positif qui contôle la quantité de phéromones déposées par la fourmi.
 void Graph_acoPheromoneUpdatePath(Graph* pheromones, Path* path, float q);
+
+ListInt* pathAllCheckpoint(Destination* dest, Path* tourne);
 
 /// @brief Applique l'évaporation des phéromones à la fin d'une itération de l'algorithme ACO.
 /// @param pheromones le graphe des phéromones.

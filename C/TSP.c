@@ -145,6 +145,57 @@ Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount,
     return bestTourne;
 }
 
+Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest){
+    Path* bestTourne = (Path *)calloc(1, sizeof(Path));
+    AssertNew(bestTourne);
+
+    Path* tourneGlouton = Graph_tspFromHeuristic(graph, station);
+
+    printf("%.1f %d\n", tourneGlouton->distance, tourneGlouton->list->nodeCount);
+    DestinationPrintList(tourneGlouton->list);
+
+    Graph* pheromone = Graph_PheromoneCreatePath(graph, tourneGlouton);
+    AssertNew(pheromone);
+
+    Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
+
+    for (int i = 0; i < iterationCount; i++){
+        #pragma omp parallel for
+        for (int j = 0; j < antCount; j++){
+            tourne[j] = Graph_acoConstructPath(graph, pheromone, station, alpha, beta);
+        }
+        Graph_acoPheromoneGlobalUpdate(pheromone, rho);
+        for (int j = 0; j < antCount; j++){
+            if((bestTourne->list == NULL) || (tourne[j]->distance < bestTourne->distance)){
+                Path_destroy(bestTourne);
+                bestTourne = Path_copy(tourne[j]);
+            }
+            //ListInt* List = pathAllCheckpoint(dest, tourne[j]);
+            //ListIntIter* iterList = ListIntIter_create(List);
+            //while (ListIntIter_isValid(iterList)){
+            //    int node = ListIntIter_get(iterList);
+            //    ListIntIter_next(iterList);
+            //    int next = ListIntIter_get(iterList);
+            //    double xA = ((coord[node][1] - minLat) * adjust) / RLat;
+            //    double yA = ((coord[node][0] - minLong) * adjust) / RLong;
+            //    double xB = ((coord[next][1] - minLat) * adjust) / RLat;
+            //    double yB = ((coord[next][0] - minLong) * adjust) / RLong;
+            //    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            //    SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
+            //    SDL_RenderPresent(renderer);
+            //}
+            //ListIntIter_destroy(iterList);
+            //ListInt_destroy(List);
+            Graph_acoPheromoneUpdatePath(pheromone, tourne[j], q);
+            Path_destroy(tourne[j]);
+        }
+    }
+    Graph_destroy(pheromone);
+    free(tourne);
+
+    return bestTourne;
+}
+
 float* Graph_acoGetProbabilities(Graph* graph, Graph* pheromones, int station, bool* explored, float alpha, float beta){
     float* proba = (float*)calloc(graph->size, sizeof(float));
     float sumTauxByDist = 0.0f;
@@ -265,12 +316,17 @@ void Graph_acoPheromoneGlobalUpdate(Graph* pheromones, float rho){
 }
 
 ListInt* pathAllCheckpoint(Destination* dest, Path* tourne){
+    if(!tourne || !dest){
+        printf("Zeubi");
+        return NULL;
+    }
     int start = ListInt_popFirst(tourne->list);
     int bin = 0;
     ListInt* list = ListInt_create();
     bool first = true;
-    while (!ListInt_isEmpty(tourne->list)){
-        int next = ListInt_popFirst(tourne->list);
+    ListIntIter* listIter = ListIntIter_create(tourne->list);
+    while (ListIntIter_isValid(listIter)){
+        int next = ListIntIter_get(listIter);
         if(first == true){
             ListInt_concatenate(list, dest->path[start][next]->list);
             first = false;
@@ -280,8 +336,9 @@ ListInt* pathAllCheckpoint(Destination* dest, Path* tourne){
             ListInt_concatenate(list, dest->path[start][next]->list);
         }
         start = next;
+        ListIntIter_next(listIter);
     }
-
+    ListIntIter_destroy(listIter);
     bin += 1;
 
     return list;
@@ -372,10 +429,6 @@ void TSP_ACO(char* filename){
     }
     
     //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
-    Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
-
-    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
-    DestinationPrintList(tourne->list);
 
     FILE* fileInter = fopen(fileInterName, "r");
 
@@ -384,7 +437,6 @@ void TSP_ACO(char* filename){
 
     double** coord = CreateCoordTab(fileInter, nb);
 
-    ListInt* list = pathAllCheckpoint(dest, tourne);
     double minLat=1024;
     double maxLat=-1024;
     double minLong=1024;
@@ -446,11 +498,32 @@ void TSP_ACO(char* filename){
     }
     SDL_SetRenderTarget(renderer, NULL);
     SDL_Rect dst = {0, 0, width, height};
-    //SDL_RenderCopy(renderer, texture, NULL, &dst);
-
+    SDL_RenderCopy(renderer, texture, NULL, &dst);
     bool running = true;
     SDL_Event event;
+
+    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest);
+
+    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
+    DestinationPrintList(tourne->list);
+    ListInt* list = pathAllCheckpoint(dest, tourne);
+
     ListIntNode* tmpNode = list->sentinel.next;
+
+    for(int i=0;i<list->nodeCount;i++) {
+        if (tmpNode != &list->sentinel && tmpNode->next != &list->sentinel) {
+            double xA = ((coord[tmpNode->value][1] - minLat) * adjust) / RLat;
+            double yA = ((coord[tmpNode->value][0] - minLong) * adjust) / RLong;
+            double xB = ((coord[tmpNode->next->value][1] - minLat) * adjust) / RLat;
+            double yB = ((coord[tmpNode->next->value][0] - minLong) * adjust) / RLong;
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
+        }
+        tmpNode = tmpNode->next;
+    }
+
+    SDL_RenderPresent(renderer);
+
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN || event.type == SDL_MOUSEBUTTONDOWN) {
@@ -458,24 +531,6 @@ void TSP_ACO(char* filename){
                 break;
             }
         }
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        SDL_RenderCopy(renderer, texture, NULL, &dst);
-
-        for(int i=0;i<list->nodeCount;i++) {
-            if (tmpNode != &list->sentinel && tmpNode->next != &list->sentinel) {
-                double xA = ((coord[tmpNode->value][1] - minLat) * adjust) / RLat;
-                double yA = ((coord[tmpNode->value][0] - minLong) * adjust) / RLong;
-                double xB = ((coord[tmpNode->next->value][1] - minLat) * adjust) / RLat;
-                double yB = ((coord[tmpNode->next->value][0] - minLong) * adjust) / RLong;
-                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
-            }
-            tmpNode = tmpNode->next;
-        }
-
-        SDL_RenderPresent(renderer);
     }
 
     SDL_DestroyTexture(texture);
