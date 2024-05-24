@@ -58,7 +58,7 @@ Path* Graph_tspFromACO(Graph* graph, int station, int iterationCount, int antCou
     Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
 
     for (int i = 0; i < iterationCount; i++){
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int j = 0; j < antCount; j++){
             tourne[j] = Graph_acoConstructPath(graph, pheromone, station, alpha, beta);
         }
@@ -113,29 +113,39 @@ Graph* Graph_PheromoneCreatePath(Graph* graph, Path* tourne){
 }
 
 Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q){
-    Path* bestTourne = (Path *)calloc(1, sizeof(Path));
-    AssertNew(bestTourne);
+    Path* bestTourne = NULL;
 
-    Path* tourneGlouton = Graph_tspFromHeuristic(graph, station);
+    Path* bestGlouton = Graph_tspFromHeuristic(graph, 0);
 
-    printf("%.1f %d\n", tourneGlouton->distance, tourneGlouton->list->nodeCount);
-    DestinationPrintList(tourneGlouton->list);
+    for (int i = 1; i < graph->size; i++){
+        Path* tourneGlouton = Graph_tspFromHeuristic(graph, i);
 
-    Graph* pheromone = Graph_PheromoneCreatePath(graph, tourneGlouton);
+        if(tourneGlouton->distance < bestGlouton->distance){
+            Path_destroy(bestGlouton);
+            bestGlouton = Path_copy(tourneGlouton);
+        }
+
+        Path_destroy(tourneGlouton);
+    }
+
+    Graph* pheromone = Graph_PheromoneCreatePath(graph, bestGlouton);
     AssertNew(pheromone);
 
-    Path_destroy(tourneGlouton);
+    Path_destroy(bestGlouton);
 
     Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
 
     for (int i = 0; i < iterationCount; i++){
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int j = 0; j < antCount; j++){
             tourne[j] = Graph_acoConstructPath(graph, pheromone, station, alpha, beta);
         }
         Graph_acoPheromoneGlobalUpdate(pheromone, rho);
         for (int j = 0; j < antCount; j++){
-            if((bestTourne->list == NULL) || (tourne[j]->distance < bestTourne->distance)){
+            if(bestTourne == NULL){
+                bestTourne = Path_copy(tourne[j]);
+            }
+            else if(tourne[j]->distance < bestTourne->distance){
                 Path_destroy(bestTourne);
                 bestTourne = Path_copy(tourne[j]);
             }
@@ -151,16 +161,27 @@ Path* Graph_tspFromACOWithGlouton(Graph* graph, int station, int iterationCount,
 }
 
 Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iterationCount, int antCount, float alpha, float beta, float rho, float q,SDL_Renderer* renderer,double** coord,double minLat,double minLong,double RLat,double RLong,int adjust,int addX,Destination* dest,SDL_Texture* texture,SDL_Rect dst){
-    Path* bestTourne = (Path *)calloc(1, sizeof(Path));
-    AssertNew(bestTourne);
+    Path* bestTourne = NULL;
 
-    Path* tourneGlouton = Graph_tspFromHeuristic(graph, station);
+    Path* bestGlouton = Graph_tspFromHeuristic(graph, 0);
 
-    printf("%.1f %d\n", tourneGlouton->distance, tourneGlouton->list->nodeCount);
-    DestinationPrintList(tourneGlouton->list);
+    for (int i = 1; i < dest->nbDestination; i++){
+        Path* tourneGlouton = Graph_tspFromHeuristic(graph, i);
 
-    Graph* pheromone = Graph_PheromoneCreatePath(graph, tourneGlouton);
+        if(tourneGlouton->distance < bestGlouton->distance){
+            Path_destroy(bestGlouton);
+            bestGlouton = Path_copy(tourneGlouton);
+        }
+
+        Path_destroy(tourneGlouton);
+    }
+
+    Graph* pheromone = Graph_PheromoneCreatePath(graph, bestGlouton);
     AssertNew(pheromone);
+
+    q = bestGlouton->distance/2.f;
+
+    Path_destroy(bestGlouton);
 
     Path** tourne = (Path**)calloc(antCount, sizeof(Path*));
 
@@ -171,7 +192,10 @@ Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iteratio
         }
         Graph_acoPheromoneGlobalUpdate(pheromone, rho);
         for (int j = 0; j < antCount; j++){
-            if((bestTourne->list == NULL) || (tourne[j]->distance < bestTourne->distance)){
+            if(bestTourne == NULL){
+                bestTourne = Path_copy(tourne[j]);
+            }
+            else if(tourne[j]->distance < bestTourne->distance){
                 Path_destroy(bestTourne);
                 bestTourne = Path_copy(tourne[j]);
             }
@@ -243,7 +267,7 @@ int argminACO(int station, Graph* graph, bool* explored){
             }
         }
     }
-    
+
     return minIndex;
 }
 
@@ -357,7 +381,7 @@ ListInt* pathAllCheckpoint(Destination* dest, Path* tourne){
     return list;
 }
 
-void TSP_Heuristic(char* filename){
+void TSP_HeuristicByName(char* filename){
     char fileGraphName[256];
     char fileInterName[256];
 
@@ -385,11 +409,6 @@ void TSP_Heuristic(char* filename){
         ListInt_insertFirst(dest->allDestination, destination[i]);
     }
 
-    Path* tourne = Graph_tspFromHeuristic(dest->graph, 0);
-
-    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
-    DestinationPrintList(tourne->list);
-
     FILE* fileInter = fopen(fileInterName, "r");
 
     int nb = 0;
@@ -397,6 +416,10 @@ void TSP_Heuristic(char* filename){
 
     double** coord = CreateCoordTab(fileInter, nb);
 
+    Path* tourne = Graph_tspFromHeuristic(dest->graph, 0);
+
+    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
+    DestinationPrintList(tourne->list);
     ListInt* list = pathAllCheckpoint(dest, tourne);
 
     CreateGeoJsonTravelPath(list, dest->allDestination, coord);
@@ -413,7 +436,7 @@ void TSP_Heuristic(char* filename){
     Path_destroy(tourne);
 }
 
-void TSP_ACO(char* filename){
+void TSP_ACOByName(char* filename){
     char fileGraphName[256];
     char fileInterName[256];
 
@@ -437,17 +460,119 @@ void TSP_ACO(char* filename){
 
     Destination* dest = DestinationPathMatrix(fileGraphName, nbDestination, destination);
 
-    printf("PathMatrix End\n");
+    for (int i = 0; i < nbDestination; i++){
+        ListInt_insertFirst(dest->allDestination, destination[i]);
+    }
+
+    FILE* fileInter = fopen(fileInterName, "r");
+
+    int nb = 0;
+    fscanf(fileInter,"%d",&nb);
+
+    double** coord = CreateCoordTab(fileInter, nb);
+
+    Path* tourne = Graph_tspFromACO(dest->graph, rand()%dest->graph->size, 600, 300, 1.25f, 1.2f, 0.025f, 1.0f);
+
+    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
+    DestinationPrintList(tourne->list);
+    ListInt* list = pathAllCheckpoint(dest, tourne);
+
+    CreateGeoJsonTravelPath(list, dest->allDestination, coord);
+
+    ListInt_destroy(list);
+    for(int i=0;i<nb;i++){
+        free(coord[i]);
+    }
+    free(coord);
+    DestinationDestroy(dest);
+    free(destination);
+    fclose(fileInter);
+    fclose(file);
+    Path_destroy(tourne);
+}
+
+void TSP_ACOWithGloutonByName(char* filename){
+    char fileGraphName[256];
+    char fileInterName[256];
+
+    FILE* file = fopen(filename, "r");
+    if(file == NULL) return;
+
+    char tmp;
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s\n", fileGraphName);
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+
+    int nbDestination = 0;
+    fscanf(file, "%d", &nbDestination);
+
+    int* destination = (int*)calloc(nbDestination, sizeof(int));
+
+    for (int i = 0; i < nbDestination; i++){
+        fscanf(file, "%d", &(destination[i]));
+    }
+
+    Destination* dest = DestinationPathMatrix(fileGraphName, nbDestination, destination);
 
     for (int i = 0; i < nbDestination; i++){
         ListInt_insertFirst(dest->allDestination, destination[i]);
     }
 
-    //char* fileRegister = "pathMatrixRegister.txt";
+    FILE* fileInter = fopen(fileInterName, "r");
 
-    //DestinationWrite(dest, fileRegister);
-    
-    //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
+    int nb = 0;
+    fscanf(fileInter,"%d",&nb);
+
+    double** coord = CreateCoordTab(fileInter, nb);
+
+    Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, rand()%dest->graph->size, 600, 300, 1.25f, 1.2f, 0.025f, 1.0f);
+
+    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
+    DestinationPrintList(tourne->list);
+    ListInt* list = pathAllCheckpoint(dest, tourne);
+
+    CreateGeoJsonTravelPath(list, dest->allDestination, coord);
+
+    ListInt_destroy(list);
+    for(int i=0;i<nb;i++){
+        free(coord[i]);
+    }
+    free(coord);
+    DestinationDestroy(dest);
+    free(destination);
+    fclose(fileInter);
+    fclose(file);
+    Path_destroy(tourne);
+}
+
+void TSP_ACOWithGloutonWithSDLByName(char* filename){
+    char fileGraphName[256];
+    char fileInterName[256];
+
+    FILE* file = fopen(filename, "r");
+    if(file == NULL) return;
+
+    char tmp;
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s\n", fileGraphName);
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+
+    int nbDestination = 0;
+    fscanf(file, "%d", &nbDestination);
+
+    int* destination = (int*)calloc(nbDestination, sizeof(int));
+
+    for (int i = 0; i < nbDestination; i++){
+        fscanf(file, "%d", &(destination[i]));
+    }
+
+    Destination* dest = DestinationPathMatrix(fileGraphName, nbDestination, destination);
+
+    for (int i = 0; i < nbDestination; i++){
+        ListInt_insertFirst(dest->allDestination, destination[i]);
+    }
 
     FILE* fileInter = fopen(fileInterName, "r");
 
@@ -467,10 +592,8 @@ void TSP_ACO(char* filename){
         if(coord[i][1]<minLat)minLat=coord[i][1];
         if(coord[i][1]>maxLat)maxLat=coord[i][1];
     }
-    printf("minLat:%lf\nmaxLat:%lf\nminLong:%lf\nmaxLong:%lf\n",minLat,maxLat,minLong,maxLong);
     double RLat=maxLat-minLat;
     double RLong=maxLong-minLong;
-    printf("RatioLat:%lf\nRatioLong:%lf\n",RLat,RLong);
 
     SDL_Init(SDL_INIT_VIDEO);
     int width = 1200;
@@ -558,16 +681,7 @@ void TSP_ACO(char* filename){
     bool running = true;
     SDL_Event event;
 
-    //Path* tourne = Graph_tspFromACOWithGlouton(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, 2.0f);
-
-    Path* glout = Graph_tspFromHeuristic(dest->graph, 0);
-
-    float q = glout->distance/2;
-
-    Path_destroy(glout);
-
-    //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, q);
-    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 600, 300, 1.25f, 1.2f, 0.025f, q, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
+    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 600, 300, 1.25f, 1.2f, 0.025f, 1.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
     DestinationPrintList(tourne->list);
@@ -632,7 +746,214 @@ void TSP_ACO(char* filename){
     free(coord);
     DestinationDestroy(dest);
     free(destination);
-    //fclose(fileInter);
+    fclose(fileInter);
+    fclose(file);
+    Path_destroy(tourne);
+}
+
+void TSP_ACOWithGloutonWithSDLWithChargingByName(char* filename){
+    char fileGraphName[256];
+    char fileInterName[256];
+
+    FILE* file = fopen(filename, "r");
+    if(file == NULL) return;
+
+    char tmp;
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s\n", fileGraphName);
+    fscanf(file, "%c", &tmp);
+    fscanf(file, "%s", fileInterName);
+
+    int nbDestination = 0;
+    fscanf(file, "%d", &nbDestination);
+
+    int* destination = (int*)calloc(nbDestination, sizeof(int));
+
+    for (int i = 0; i < nbDestination; i++){
+        fscanf(file, "%d", &(destination[i]));
+    }
+
+    char* registerPath = "pathMatrixRegister.txt";
+
+    Destination* dest = DestinationLoad(registerPath);
+
+    for (int i = 0; i < nbDestination; i++){
+        ListInt_insertFirst(dest->allDestination, destination[i]);
+    }
+
+    FILE* fileInter = fopen(fileInterName, "r");
+
+    int nb = 0;
+    fscanf(fileInter,"%d",&nb);
+
+    double** coord = CreateCoordTab(fileInter, nb);
+
+    double minLat=1024;
+    double maxLat=-1024;
+    double minLong=1024;
+    double maxLong=-1024;
+
+    for(int i=0;i<nb;i++){
+        if(coord[i][0]<minLong)minLong=coord[i][0];
+        if(coord[i][0]>maxLong)maxLong=coord[i][0];
+        if(coord[i][1]<minLat)minLat=coord[i][1];
+        if(coord[i][1]>maxLat)maxLat=coord[i][1];
+    }
+    double RLat=maxLat-minLat;
+    double RLong=maxLong-minLong;
+
+    SDL_Init(SDL_INIT_VIDEO);
+    int width = 1200;
+    int height = 800;
+    SDL_Window* window = SDL_CreateWindow("Blank Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
+    if (window == NULL) {
+        SDL_Log("Failed to create window: %s", SDL_GetError());
+        return;
+    }
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == NULL) {
+        SDL_Log("Failed to create renderer: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+    SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
+
+    SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                              SDL_TEXTUREACCESS_TARGET, width, height);
+    if (texture == NULL) {
+        SDL_Log("Failed to create texture: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
+    SDL_Surface *surface = NULL;
+    surface = SDL_LoadBMP("Image/bodin.bmp");
+    if(surface == NULL)
+    {
+        SDL_Log("Erreur SDL_LoadBMP : %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+    SDL_Texture *bodin = SDL_CreateTextureFromSurface(renderer, surface);
+    if (bodin == NULL) {
+        SDL_Log("Failed to create bodin: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
+    SDL_Surface *surface2 = NULL;
+    surface2 = SDL_LoadBMP("Image/bannier.bmp");
+    if(surface2 == NULL)
+    {
+        SDL_Log("Erreur SDL_LoadBMP : %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+    SDL_Texture *bannier = SDL_CreateTextureFromSurface(renderer, surface2);
+    if (bannier == NULL) {
+        SDL_Log("Failed to create bannier: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
+    SDL_SetRenderTarget(renderer, texture);
+
+    int adjust=width;
+    int addX=0;
+    if(height<adjust){
+        adjust=height;
+        addX=(width-height)/2;
+    }
+    for(int i=0;i<nb;i++){
+        double x = ((coord[i][1]-minLat)*adjust)/RLat;
+        double y = ((coord[i][0]-minLong)*adjust)/RLong;
+        //printf("X:%lf,Y:%lf\n",x,y);
+        //if(i<nb/3)SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        //else if(i<(nb/3)*2)SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        //else SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawPointF(renderer,(float)y+addX,(float)adjust-x);
+    }
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_Rect dst = {0, 0, width, height};
+    SDL_RenderCopy(renderer, texture, NULL, &dst);
+    SDL_RenderPresent(renderer);
+    SDL_RenderCopy(renderer, texture, NULL, &dst);
+    bool running = true;
+    SDL_Event event;
+
+    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 600, 300, 1.25f, 1.2f, 0.025f, 1.0f, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
+
+    printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
+    DestinationPrintList(tourne->list);
+    ListInt* list = pathAllCheckpoint(dest, tourne);
+
+    ListIntNode* tmpNode = list->sentinel.next;
+
+    for(int i=0;i<list->nodeCount;i++) {
+        if (tmpNode != &list->sentinel && tmpNode->next != &list->sentinel) {
+            double xA = ((coord[tmpNode->value][1] - minLat) * adjust) / RLat;
+            double yA = ((coord[tmpNode->value][0] - minLong) * adjust) / RLong;
+            double xB = ((coord[tmpNode->next->value][1] - minLat) * adjust) / RLat;
+            double yB = ((coord[tmpNode->next->value][0] - minLong) * adjust) / RLong;
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
+        }
+        tmpNode = tmpNode->next;
+    }
+    ListIntNode* CheckpointNode = dest->allDestination->sentinel.next;
+    for(int i=0;i<dest->allDestination->nodeCount;i++) {
+        if (CheckpointNode != &dest->allDestination->sentinel) {
+            double xCheck = ((coord[CheckpointNode->value][1] - minLat) * adjust) / RLat;
+            double yCheck = ((coord[CheckpointNode->value][0] - minLong) * adjust) / RLong;
+            SDL_Rect rect = {(float) yCheck + addX - 20, (float) adjust - xCheck - 20, 40, 40};
+            if(i%2==0){
+                SDL_RenderCopy(renderer, bannier, NULL, &rect);
+            }
+            else{
+                SDL_RenderCopy(renderer, bodin, NULL, &rect);
+            }
+            //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            //SDL_RenderDrawPointF(renderer, (float) yCheck + addX, (float) adjust - xCheck);
+        }
+        CheckpointNode = CheckpointNode->next;
+    }
+    SDL_RenderPresent(renderer);
+
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN) { // || event.type == SDL_MOUSEBUTTONDOWN
+                running = false;
+                break;
+            }
+        }
+    }
+
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(bodin);
+    SDL_FreeSurface(surface2);
+    SDL_DestroyTexture(bannier);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
+    CreateGeoJsonTravelPath(list, dest->allDestination, coord);
+
+    ListInt_destroy(list);
+    for(int i=0;i<nb;i++){
+        free(coord[i]);
+    }
+    free(coord);
+    DestinationDestroy(dest);
+    free(destination);
+    fclose(fileInter);
     fclose(file);
     Path_destroy(tourne);
 }

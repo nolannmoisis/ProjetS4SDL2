@@ -9,7 +9,6 @@ void DestinationWrite(Destination* destination, char* filename){
     fprintf(file, "%d %d", size, (size * size));
     for (int u = 0; u < size; u++){
         for (int v = 0; v < size; v++){
-            //ici ça plante
             fprintf(file, "\n%d %d %.1f %d", u, v, Graph_getArc(destination->graph, u, v)->weight, destination->path[u][v]->list->nodeCount);
             ListIntIter* iterList = ListIntIter_create(destination->path[u][v]->list);
             AssertNew(iterList);
@@ -47,31 +46,37 @@ Destination* DestinationLoad(char* filename){
     int nbArc = 0;
     int u = 0;
     int v = 0;
-    int actualNode = 0;
+    int nbNode = 0;
+    int tmp = 0;
+    ArcData* data = (ArcData*)calloc(1, sizeof(ArcData));
 
     fscanf(file, "%d %d", &size, &nbArc);
 
     Destination* dest = DestinationCreate(size);
 
-    dest->path = (Path***)calloc(size, sizeof(Path**));
-    for (int i = 0; i < size; i++){
-        dest->path[i] = (Path**)calloc(size, sizeof(Path*));
-    }
-
-    for (int i = 0; i <= nbArc; i++){
-        ArcData data;
-        fscanf(file, "%d %d %f %d", &u, &v, &data.weight, &dest->path[u][v]->list->nodeCount);
-        dest->path[u][v]->distance = data.weight;
-        Graph_setArc(dest->graph, u, v, &data);
-        for (int j = 0; j < dest->path[u][v]->list->nodeCount; j++){
-            fscanf(file, "%d", &actualNode);
-            ListInt_insertLast(dest->path[u][v]->list, actualNode);
+    for (int i = 0; i < nbArc; i++){
+        fscanf(file, "%d %d %f %d %d", &u, &v, &data->weight, &nbNode, &tmp);
+        Graph_setArc(dest->graph, u, v, data);
+        dest->path[u][v] = Path_create(tmp);
+        dest->path[u][v]->list->nodeCount = nbNode;
+        for (int i = 1; i < nbNode; i++){
+            fscanf(file, "%d", &tmp);
+            Path_insertLast(dest->path[u][v], tmp, 0.0f);
         }
+        dest->path[u][v]->distance = data->weight;
     }
 
+    fscanf(file, "%d", &nbNode);
+    for (int i = 0; i < nbNode; i++){
+        fscanf(file, "%d", &tmp);
+        ListInt_insertLast(dest->allDestination, tmp);
+    }
+
+
+    free(data);
     fclose(file);
 
-    return NULL;
+    return dest;
 }
 
 Destination* DestinationCreate(int nbDestination){
@@ -112,8 +117,6 @@ Destination* DestinationPathMatrix(char* filename, int nbDestination, int* desti
 
     Graph* graph = Graph_load(filename);
     AssertNew(graph);
-
-    printf("Graph Load\n");
 
     Destination* dest = DestinationCreate(nbDestination);
 
@@ -177,7 +180,7 @@ void DestinationPrintList(ListInt* list){
 
     ListIntNode *sentinel = &(list->sentinel);
     ListIntNode *curr = sentinel->next;
-    printf("%d ", list->nodeCount);
+    //printf("%d ", list->nodeCount);
     while (curr != sentinel->prev)
     {
         printf("%d ", curr->value);
@@ -210,7 +213,7 @@ void DestinationPrint(Destination* destination){
     }
 }
 
-void pathMatrix(char* filename){
+void pathMatrixRegister(char* filename){
     char fileGraphName[256];
     char fileInterName[256];
 
@@ -233,14 +236,12 @@ void pathMatrix(char* filename){
     }
 
     Destination* dest = DestinationPathMatrix(fileGraphName, nbDestination, destination);
-    Graph_print(dest->graph);
 
-    printf("\n----FullPrint----\n");
-    DestinationPrintFull(dest);
-    printf("-----------------\n");
-    printf("\n----Print----\n");
-    DestinationPrint(dest);
-    printf("-------------\n\n");
+    char* registerPath = "pathMatrixRegister.txt";
+
+    DestinationWrite(dest, registerPath);
+
+    printf("Écriture dans le fichier réussi !\n");
 
     fclose(file);
     free(destination);

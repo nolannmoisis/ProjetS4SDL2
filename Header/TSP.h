@@ -71,6 +71,12 @@ ListInt* pathAllCheckpoint(Destination* dest, Path* tourne);
 /// @param rho le coefficient d'évaporation des phéromones (entre 0.f et 1.f).
 void Graph_acoPheromoneGlobalUpdate(Graph* pheromones, float rho);
 
-void TSP_Heuristic(char* filename);
+void TSP_HeuristicByName(char* filename);
 
-void TSP_ACO(char* filename);
+void TSP_ACOByName(char* filename);
+
+void TSP_ACOWithGloutonByName(char* filename);
+
+void TSP_ACOWithGloutonWithSDLByName(char* filename);
+
+void TSP_ACOWithGloutonWithSDLWithChargingByName(char* filename);

@@ -31,4 +31,4 @@ void DestinationPrintFull(Destination* destination);
 
 void DestinationPrint(Destination* destination);
 
-void pathMatrix(char* filename);
+void pathMatrixRegister(char* filename);

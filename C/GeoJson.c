@@ -7,7 +7,7 @@ void CreateGeoJsonSimplePath(ListInt* Path, double** Coord){
     double start2=Coord[Path->sentinel.next->value][1];
     double end1=Coord[Path->sentinel.prev->value][0];
     double end2=Coord[Path->sentinel.prev->value][1];
-    GJs = fopen("../SimplePath.geojson", "w");
+    GJs = fopen("./SimplePath.geojson", "w");
     fprintf(GJs,"%s%lf%s%lf%s%lf%s%lf%s","{\n"
            "    \"type\": \"FeatureCollection\",\n"
            "    \"features\": [\n"
