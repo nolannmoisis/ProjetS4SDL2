@@ -175,28 +175,28 @@ Path* Graph_tspFromACOWithGloutonWithSDL(Graph* graph, int station, int iteratio
                 Path_destroy(bestTourne);
                 bestTourne = Path_copy(tourne[j]);
             }
-            ListInt* List = pathAllCheckpoint(dest, tourne[j]);
-            ListInt* listCopy = ListInt_copy(List);
-            int actual = ListInt_popFirst(listCopy);
-            int next = 0;
-            if (j % (int)(antCount / 5) == 0) {
+            if (i % (int)(iterationCount / 5) == 0) {
+                ListInt* List = pathAllCheckpoint(dest, tourne[j]);
+                ListInt* listCopy = ListInt_copy(List);
+                int actual = ListInt_popFirst(listCopy);
+                int next = 0;
                 while (!ListInt_isEmpty(listCopy)) {
                     next = ListInt_popFirst(listCopy);
                     double xA = ((coord[actual][1] - minLat) * adjust) / RLat;
                     double yA = ((coord[actual][0] - minLong) * adjust) / RLong;
                     double xB = ((coord[next][1] - minLat) * adjust) / RLat;
                     double yB = ((coord[next][0] - minLong) * adjust) / RLong;
-                    SDL_SetRenderDrawColor(renderer, 255, 0 , 0, 1);
-                    SDL_RenderDrawLineF(renderer, (float) yA + addX, (float)adjust - xA, (float)yB + addX,(float)adjust - xB);
+                    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
+                    SDL_RenderDrawLineF(renderer, (float) yA + addX, (float) adjust - xA, (float) yB + addX,(float) adjust - xB);
                     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                     if (List->nodeCount < 1) break;
 
                     actual = next;
                 }
+                ListInt_destroy(listCopy);
+                ListInt_destroy(List);
             }
             fflush(stdout);
-            ListInt_destroy(listCopy);
-            ListInt_destroy(List);
             Graph_acoPheromoneUpdatePath(pheromone, tourne[j], q);
             Path_destroy(tourne[j]);
         }
@@ -498,6 +498,40 @@ void TSP_ACO(char* filename){
         return;
     }
 
+    SDL_Surface *surface = NULL;
+    surface = SDL_LoadBMP("Image/bodin.bmp");
+    if(surface == NULL)
+    {
+        SDL_Log("Erreur SDL_LoadBMP : %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+    SDL_Texture *bodin = SDL_CreateTextureFromSurface(renderer, surface);
+    if (bodin == NULL) {
+        SDL_Log("Failed to create bodin: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
+    SDL_Surface *surface2 = NULL;
+    surface2 = SDL_LoadBMP("Image/bannier.bmp");
+    if(surface2 == NULL)
+    {
+        SDL_Log("Erreur SDL_LoadBMP : %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+    SDL_Texture *bannier = SDL_CreateTextureFromSurface(renderer, surface2);
+    if (bannier == NULL) {
+        SDL_Log("Failed to create bannier: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return;
+    }
+
     SDL_SetRenderTarget(renderer, texture);
 
     int adjust=width;
@@ -533,7 +567,7 @@ void TSP_ACO(char* filename){
     Path_destroy(glout);
 
     //Path* tourne = Graph_tspFromACO(dest->graph, 0, 1000, 100, 2.0f, 3.0f, 0.1f, q);
-    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 800, 400, 1.25f, 1.2f, 0.025f, q, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
+    Path* tourne = Graph_tspFromACOWithGloutonWithSDL(dest->graph, rand()%dest->graph->size, 600, 300, 1.25f, 1.2f, 0.025f, q, renderer,coord,minLat,minLong,RLat,RLong,adjust,addX,dest,texture,dst);
 
     printf("%.1f %d\n", tourne->distance, tourne->list->nodeCount);
     DestinationPrintList(tourne->list);
@@ -552,7 +586,23 @@ void TSP_ACO(char* filename){
         }
         tmpNode = tmpNode->next;
     }
-
+    ListIntNode* CheckpointNode = dest->allDestination->sentinel.next;
+    for(int i=0;i<dest->allDestination->nodeCount;i++) {
+        if (CheckpointNode != &dest->allDestination->sentinel) {
+            double xCheck = ((coord[CheckpointNode->value][1] - minLat) * adjust) / RLat;
+            double yCheck = ((coord[CheckpointNode->value][0] - minLong) * adjust) / RLong;
+            SDL_Rect rect = {(float) yCheck + addX - 20, (float) adjust - xCheck - 20, 40, 40};
+            if(i%2==0){
+                SDL_RenderCopy(renderer, bannier, NULL, &rect);
+            }
+            else{
+                SDL_RenderCopy(renderer, bodin, NULL, &rect);
+            }
+            //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            //SDL_RenderDrawPointF(renderer, (float) yCheck + addX, (float) adjust - xCheck);
+        }
+        CheckpointNode = CheckpointNode->next;
+    }
     SDL_RenderPresent(renderer);
 
     while (running) {
@@ -566,6 +616,10 @@ void TSP_ACO(char* filename){
 
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(bodin);
+    SDL_FreeSurface(surface2);
+    SDL_DestroyTexture(bannier);
     SDL_DestroyWindow(window);
     SDL_Quit();
 

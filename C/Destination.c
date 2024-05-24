@@ -118,8 +118,14 @@ Destination* DestinationPathMatrix(char* filename, int nbDestination, int* desti
     Destination* dest = DestinationCreate(nbDestination);
 
     for (int i = 0; i < nbDestination; i++){
+
+        int* predecessors = (int*)calloc(graph->size, sizeof(int));
+        float* distances = (float*)calloc(graph->size, sizeof(float));
+
+        Graph_dijkstra(graph, destination[i], -1, predecessors, distances);
+
         for (int j = i; j < nbDestination; j++){
-            Path* path = Graph_shortestPath(graph, destination[i], destination[j]);
+            Path* path = Graph_dijkstraGetPath(predecessors, distances, destination[j]);
 
             dest->path[i][j] = path;
 
@@ -136,6 +142,29 @@ Destination* DestinationPathMatrix(char* filename, int nbDestination, int* desti
                 Graph_setArc(dest->graph, j, i, &data);
             }
         }
+
+        free(predecessors);
+        free(distances);
+
+
+        /*for (int j = i; j < nbDestination; j++){
+            Path* path = Graph_shortestPath(graph, destination[i], destination[j]);
+
+            dest->path[i][j] = path;
+
+            ArcData data;
+            data.weight = path->distance;
+
+            Graph_setArc(dest->graph, i, j, &data);
+
+            if(j != i){
+                Path* reversePath = PathReverse_copy(path);
+
+                dest->path[j][i] = reversePath;
+
+                Graph_setArc(dest->graph, j, i, &data);
+            }
+        }*/
     }
 
     Graph_destroy(graph);
